@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 type Product struct {
     ID          uint    `json:"id" gorm:"primaryKey"`
@@ -12,7 +12,9 @@ type Product struct {
 }
 
 func main() {
-	// r := gin.Default()
-	setupDatabase()
-	// product(r)
+	r := gin.Default()
+	db := setupDatabase()
+	product(r, db)
+
+	r.Run()
 }

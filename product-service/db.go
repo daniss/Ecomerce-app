@@ -5,7 +5,6 @@ import (
 	"gorm.io/driver/postgres"
 	"github.com/joho/godotenv"
 	"os"
-	"fmt"
 )
 
 func setupDatabase() *gorm.DB {
@@ -14,7 +13,6 @@ func setupDatabase() *gorm.DB {
 		panic("No .env file found")
 	}
 	dsn := "host=" + os.Getenv("DB_HOST") + " user=" + os.Getenv("DB_USER") + " password=" + os.Getenv("DB_PASSWORD") + " dbname=" + os.Getenv("DB") + " port=" + os.Getenv("DB_PORT")
-	fmt.Println("Here :", dsn)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect to the database")
