@@ -9,7 +9,7 @@ import (
 
 func product(r *gin.Engine) {
 	r.GET("/products", func(c *gin.Context) {
-
+		
 	})
 
 	r.GET("/products/:id", func(c *gin.Context) {
@@ -25,7 +25,7 @@ func product(r *gin.Engine) {
 	})
 
 	r.DELETE("/products/:id", func(c *gin.Context) {
-		
+
 	})
 }
 
