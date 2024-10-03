@@ -1,12 +1,14 @@
-# Use the official PostgreSQL image from the Docker Hub
-FROM postgres:latest
+FROM golang:1.23 AS builder
+RUN mkdir app
+WORKDIR /app
+COPY . .
+RUN go mod tidy
+RUN go build -o product-service .
 
-# Set environment variables for PostgreSQL
 
-# Expose the PostgreSQL port
-EXPOSE 5432
-
-# Add a custom initialization script (optional)
-# COPY init.sql /docker-entrypoint-initdb.d/
-
-# The official image already has an entrypoint script that starts PostgreSQL
+FROM alpine:latest
+WORKDIR /root/
+COPY .env /root/
+RUN apk add libc6-compat
+COPY --from=builder /app/product-service .
+CMD ["./product-service"]
