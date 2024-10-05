@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"github.com/gin-gonic/gin"
 )
 type Product struct {
@@ -15,6 +16,5 @@ func main() {
 	r := gin.Default()
 	db := setupDatabase()
 	product(r, db)
-
-	r.Run()
+	r.Run("0.0.0.0:8080")
 }
