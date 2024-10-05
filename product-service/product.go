@@ -4,7 +4,52 @@ import (
     "net/http"
     "github.com/gin-gonic/gin"
     "gorm.io/gorm"
+	"strings"
+	"os"
+	"github.com/golang-jwt/jwt"
 )
+
+type CustomClaims struct {
+	UserID uint   `json:"user_id"`
+	Role   string `json:"role"`
+	jwt.StandardClaims
+}
+
+func jwtAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := c.GetHeader("Authorization")
+		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "No or invalid authorization given"})
+			c.Abort()
+			return
+		}
+		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+		key := os.Getenv("SECRETKEY")
+		if key == "" {
+			c.Abort()
+			panic("SECRETKEY environment variable is not set")
+		}
+		claims := &CustomClaims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte(key), nil
+		})
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token", "error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		if !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+			c.Abort()
+			return
+		}
+		c.Set("Role", claims.Role)
+
+		c.Next()
+	}
+}
 
 func product(r *gin.Engine, db *gorm.DB) {
     r.GET("/products", jwtAuthMiddleware(), func(c *gin.Context) {
@@ -105,3 +150,4 @@ func product(r *gin.Engine, db *gorm.DB) {
         c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
     })
 }
+

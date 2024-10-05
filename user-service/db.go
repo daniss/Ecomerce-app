@@ -20,6 +20,6 @@ func setupDatabase() *gorm.DB {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	db.AutoMigrate(&Product{})
+	db.AutoMigrate(&Users{})
 	return db
 }

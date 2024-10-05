@@ -16,7 +16,7 @@ spec:
       - name: product-service
         image: danios149/product-service:latest
         ports:
-        - containerPort: 8080  # Port where the app runs
+        - containerPort: 8080
         envFrom:
         - configMapRef:
             name: env-config
