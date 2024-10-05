@@ -19,10 +19,6 @@ spec:
         image: postgres:13
         ports:
         - containerPort: 5432
-        env:
-        - name: POSTGRES_DB
-          value: "test"
-        - name: POSTGRES_USER
-          value: "test"
-        - name: POSTGRES_PASSWORD
-          value: "test"
+        envFrom:
+        - configMapRef:
+            name: env-config

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: product-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: product-service
@@ -17,12 +17,6 @@ spec:
         image: danios149/product-service:latest
         ports:
         - containerPort: 8080  # Port where the app runs
-        env:
-        - name: DB
-          value: "test"
-        - name: DB_USER
-          value: "test"
-        - name: DB_PASSWORD
-          value: "test"
-        - name: DB_HOST
-          value: "postgres-service"  # Kubernetes service for Postgres
+        envFrom:
+        - configMapRef:
+            name: env-config

@@ -8,7 +8,6 @@ RUN go build -o product-service .
 
 FROM alpine:latest
 WORKDIR /root/
-COPY .env /root/
 RUN apk add libc6-compat
 COPY --from=builder /app/product-service .
 CMD ["./product-service"]
