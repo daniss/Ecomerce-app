@@ -1,24 +1,24 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
-
-	"encoding/json"
-	"io"
 )
 
 type CustomClaims struct {
-	UserID uint   `json:"user_id"`
+	UserID uint   `json:"userID"`
 	Role   string `json:"role"`
 	jwt.StandardClaims
+}
+
+type OrderCheck struct {
+	ProductID uint      `json:"product_id" default:"0"`
+	Quantity  int       `json:"quantity" default:"0"`
 }
 
 type Product struct {
@@ -61,7 +61,6 @@ func jwtAuthMiddleware() gin.HandlerFunc {
 		}
 		c.Set("Role", claims.Role)
 		c.Set("UserID", claims.UserID)
-		c.Set("Authorization", tokenString)
 
 		c.Next()
 	}
@@ -95,17 +94,52 @@ func order(r *gin.Engine, db *gorm.DB) {
 	})
 
 	r.POST("/orders", jwtAuthMiddleware(), func(c *gin.Context) {
-		var order Order
+		var order OrderCheck
 
 		if err := c.BindJSON(&order); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+        if order.ProductID == 0 || order.Quantity == 0 {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Product ID, quantity, and price are required"})
+            return
+        }
+
+        var product Product
+
+        result := db.Where("id = ?", order.ProductID).First(&product)
+
+        if result.Error != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+            return
+        }
+
+        if product.Stock < order.Quantity {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Not enough stock"})
+            return
+        }
+
+        product.Stock -= order.Quantity
+
+        if err := db.Save(&product).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+            return
+        }
+
+        var newOrder Order
+
+        newOrder.UserID = c.MustGet("UserID").(uint)
+        newOrder.ProductID = order.ProductID
+        newOrder.Quantity = order.Quantity
+        newOrder.Price = product.Price * float64(order.Quantity)
 		
-		if err := db.Save(&order).Error; err != nil {
+		if err := db.Save(&newOrder).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		c.JSON(http.StatusOK, order)
 
         // POTENTIAL CODE FOR NOTIFYING EXTERNAL SERVICE WHEN UPGRADING TO MULTIPLE DATABASES //
         // token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -171,7 +205,6 @@ func order(r *gin.Engine, db *gorm.DB) {
 		// 	return
 		// }
 
-		c.JSON(http.StatusOK, order)
 	})
 
 	r.PUT("/orders/:id", jwtAuthMiddleware(), func(c *gin.Context) {

@@ -132,6 +132,7 @@ func login(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 
+		password := user.PasswordHash
 		var dbUser Users
 		if rec := db.Where("username = ?", user.Username).First(&dbUser); rec.Error == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "User doesn't exist"})
@@ -140,8 +141,7 @@ func login(r *gin.Engine, db *gorm.DB) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": rec.Error.Error()})
 			return
 		}
-
-		if err := HashCompare(user.PasswordHash, dbUser.PasswordHash); err != nil {
+		if err := HashCompare(password, dbUser.PasswordHash); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Wrong password"})
 			return
 		}

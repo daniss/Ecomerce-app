@@ -10,9 +10,8 @@ import (
 )
 
 type CustomClaims struct {
-	UserID uint   `json:"user_id"`
+	UserID uint   `json:"userID"`
 	Role   string `json:"role"`
-	Service string `json:"service"`
 	jwt.StandardClaims
 }
 
@@ -52,6 +51,9 @@ func jwtAuthMiddleware() gin.HandlerFunc {
 		// 	c.Set("Role", claims.Role)
 		// 	c.Set("UserID", claims.UserID)
 		// }
+
+		c.Set("Role", claims.Role)
+		c.Set("UserID", claims.UserID)
 
 		c.Next()
 	}

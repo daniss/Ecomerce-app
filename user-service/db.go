@@ -14,7 +14,6 @@ func setupDatabase() *gorm.DB {
 	DB_HOST := os.Getenv("POSTGRES_HOST")
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", DB_HOST, DB_USER, DB_PASSWORD, DB)
-	fmt.Println("voici la config au final", dsn)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
