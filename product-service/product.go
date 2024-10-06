@@ -46,10 +46,12 @@ func jwtAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if claims.Service != "service" {
-			c.Set("Role", claims.Role)
-			c.Set("UserID", claims.UserID)
-		}
+
+		// IF IN THE FUTUR WE WANT TO SEPARATE THE DATABASES FOR EACH SERVICE //
+		// if claims.Service != "service" {
+		// 	c.Set("Role", claims.Role)
+		// 	c.Set("UserID", claims.UserID)
+		// }
 
 		c.Next()
 	}

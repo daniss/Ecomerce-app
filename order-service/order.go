@@ -101,60 +101,58 @@ func order(r *gin.Engine, db *gorm.DB) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
-		
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"service": "service",
-		})
-
-		tokenString, _ := token.SignedString([]byte(os.Getenv("SECRETKEY")))
-
-		var order_id string = strconv.FormatUint(uint64(order.ID), 10)
-
-		req, err := http.NewRequest(http.MethodGet, "http://product-service:8080/products/" + order_id, nil)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request"})
-			return
-		}
-		req.Header.Set("Authorization", "Bearer " + tokenString)
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to notify external service"})
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Product does not exist"})
-			return
-		}
-
-		body, err := io.ReadAll(resp.Body)
-    	if err != nil {
-    	    fmt.Println("Error reading response body:", err)
-    	    return
-    	}
-
-    	var product Product
-    	err = json.Unmarshal(body, &product)
-    	if err != nil {
-    	    fmt.Println("Error unmarshaling JSON:", err)
-    	    return
-    	}
-
-		if product.Stock < order.Quantity {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Not enough stock"})
-			return
-		}
 		
 		if err := db.Save(&order).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
+        // POTENTIAL CODE FOR NOTIFYING EXTERNAL SERVICE WHEN UPGRADING TO MULTIPLE DATABASES //
+        // token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		// 	"service": "service",
+		// })
+
+		// tokenString, _ := token.SignedString([]byte(os.Getenv("SECRETKEY")))
+
+		// var order_id string = strconv.FormatUint(uint64(order.ID), 10)
+
+		// req, err := http.NewRequest(http.MethodGet, "http://product-service:8080/products/" + order_id, nil)
+		// if err != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request"})
+		// 	return
+		// }
+		// req.Header.Set("Authorization", "Bearer " + tokenString)
+
+		// client := &http.Client{}
+		// resp, err := client.Do(req)
+		// if err != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to notify external service"})
+		// 	return
+		// }
+		// defer resp.Body.Close()
+
+		// if resp.StatusCode != http.StatusOK {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Product does not exist"})
+		// 	return
+		// }
+
+		// body, err := io.ReadAll(resp.Body)
+    	// if err != nil {
+    	//     fmt.Println("Error reading response body:", err)
+    	//     return
+    	// }
+
+    	// var product Product
+    	// err = json.Unmarshal(body, &product)
+    	// if err != nil {
+    	//     fmt.Println("Error unmarshaling JSON:", err)
+    	//     return
+    	// }
+
+		// if product.Stock < order.Quantity {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Not enough stock"})
+		// 	return
+		// }
 
 		// data := map[string]interface{}{
 		// 	"order_id": order.ID,
