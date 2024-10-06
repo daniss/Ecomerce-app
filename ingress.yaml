@@ -24,3 +24,10 @@ spec:
             name: user-service
             port:
               number: 8080
+      - path: /order(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: order-service
+            port:
+              number: 8080

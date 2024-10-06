@@ -12,6 +12,7 @@ import (
 type CustomClaims struct {
 	UserID uint   `json:"user_id"`
 	Role   string `json:"role"`
+	Service string `json:"service"`
 	jwt.StandardClaims
 }
 
@@ -45,7 +46,10 @@ func jwtAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("Role", claims.Role)
+		if claims.Service != "service" {
+			c.Set("Role", claims.Role)
+			c.Set("UserID", claims.UserID)
+		}
 
 		c.Next()
 	}
@@ -130,7 +134,7 @@ func product(r *gin.Engine, db *gorm.DB) {
         var product Product
         id := c.Param("id")
 
-        if err := db.Exec("UPDATE tasks SET id = id - 1 WHERE id > ?", id).Error; err != nil {
+        if err := db.Exec("UPDATE products SET id = id - 1 WHERE id > ?", id).Error; err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
             return
         }

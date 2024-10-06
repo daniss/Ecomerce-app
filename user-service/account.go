@@ -1,16 +1,23 @@
 package main
 
 import (
-	"net/http"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"golang.org/x/crypto/bcrypt"
-	"github.com/golang-jwt/jwt"
-	"time"
 	"fmt"
+	"net/http"
 	"os"
+	"time"
+
+	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	// "github.com/joho/godotenv"
 )
+
+type UsersCheck struct {
+	Username string `json:"username" binding:"required"`
+	PasswordHash string `json:"password" binding:"required"`
+}
 
 func HashPassword(PasswordHash string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(PasswordHash), 14)
@@ -45,10 +52,18 @@ func RoleMiddleware(roles ...string) gin.HandlerFunc {
 
 func register(r *gin.Engine, db *gorm.DB) {
 	r.POST("/register", func(c *gin.Context) {
-		var user Users
+		var user UsersCheck
 
-		if err := c.BindJSON(&user); err != nil {
+
+		decode := json.NewDecoder(c.Request.Body)
+		decode.DisallowUnknownFields()
+		if err := decode.Decode(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if user.Username == "" || user.PasswordHash == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Username and password are required"})
 			return
 		}
 
@@ -65,8 +80,12 @@ func register(r *gin.Engine, db *gorm.DB) {
 			c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 			return
 		}
-		user.Role = "User"
-		result := db.Create(&user)
+
+		var toregister Users
+		toregister.Username = user.Username
+		toregister.PasswordHash = user.PasswordHash
+		toregister.Role = "User"
+		result := db.Create(&toregister)
 
 		if result.RowsAffected == 0 {
 			c.JSON(http.StatusConflict, gin.H{"message": "Didn't work"})
@@ -99,14 +118,20 @@ func createToken(user Users) (string, error) {
 
 func login(r *gin.Engine, db *gorm.DB) {
 	r.POST("/login", func(c *gin.Context) {
-		var user Users
+		var user UsersCheck
 
-		if err := c.BindJSON(&user); err != nil {
+		decoder := json.NewDecoder(c.Request.Body)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		mdp := user.PasswordHash
-		
+
+		if user.Username == "" || user.PasswordHash == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Username and password are required"})
+			return
+		}
+
 		var dbUser Users
 		if rec := db.Where("username = ?", user.Username).First(&dbUser); rec.Error == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "User doesn't exist"})
@@ -116,7 +141,7 @@ func login(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 
-		if err := HashCompare(mdp, dbUser.PasswordHash); err != nil {
+		if err := HashCompare(user.PasswordHash, dbUser.PasswordHash); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Wrong password"})
 			return
 		}
