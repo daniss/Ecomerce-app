@@ -19,8 +19,6 @@ Additionally, **Prometheus** and **Grafana** are integrated for monitoring syste
 
 ## Architecture
 
-![Architecture Diagram](link-to-architecture-diagram-if-you-have-one)
-
 The application is composed of the following microservices:
 
 1. **User Service** - Manages users and authentication.
